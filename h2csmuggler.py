@@ -43,13 +43,15 @@ def establish_tcp_connection(proxy_url):
     connect_args = (proxy_url.hostname, int(port))
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(MAX_TIMEOUT)
+    sock.connect(connect_args)
 
     retSock = sock
     if proxy_url.scheme == "https":
-        retSock = ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLS)
-
-    retSock.settimeout(MAX_TIMEOUT)
-    retSock.connect(connect_args)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        retSock = context.wrap_socket(sock, server_hostname=proxy_url.hostname)
 
     return retSock
 
